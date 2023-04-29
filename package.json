@@ -11,6 +11,9 @@
   "files": [
     "dist"
   ],
+  "bin": {
+    "howtf": "./dist/index.mjs"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.mjs",
@@ -32,6 +35,7 @@
     "start": "node ./dist/index.mjs",
     "dev": "nodemon ./src/index.ts",
     "build": "unbuild",
+    "stub": "unbuild --stub",
     "format": "prettier --write .",
     "lint": "eslint ."
   },
@@ -48,5 +52,10 @@
     "tsx": "^3.12.6",
     "typescript": "^5.0.4",
     "unbuild": "^1.2.1"
+  },
+  "dependencies": {
+    "conf": "^11.0.1",
+    "openai": "^3.2.1",
+    "prompts": "^2.4.2"
   }
 }
