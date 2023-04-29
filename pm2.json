@@ -1,0 +1,8 @@
+{
+  "apps": [
+    {
+      "name": "howtf",
+      "script": "./dist/index.mjs"
+    }
+  ]
+}
