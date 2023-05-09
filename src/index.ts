@@ -120,7 +120,7 @@ const main = async () => {
     process.stdout.moveCursor(0, -2)
     process.stdout.clearScreenDown()
 
-    await execaCommand(command, { stdio: "inherit" })
+    await execaCommand(command, { stdio: "inherit", shell: true })
   }
 }
 
