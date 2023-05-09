@@ -31,7 +31,7 @@ const help = () => {
     "Examples:",
     "  howtf undo last 2 git commits",
     "  howtf remove all untracked files in git",
-    "  print contents of all files ending in .js in current directory",
+    "  howtf print contents of all files ending in .js in current directory",
     "",
     "Config file location:",
     `  ${config.path}`,
