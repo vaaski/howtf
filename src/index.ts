@@ -7,6 +7,7 @@ import { execaCommand } from "execa"
 import packageJson from "../package.json"
 import { config, modelEnum } from "./config"
 import { askAI } from "./gpt"
+import ora from "ora"
 
 const parameters = minimist(process.argv.slice(2), { string: ["key", "k", "model", "m"] })
 const query = parameters._.join(" ")
@@ -104,8 +105,9 @@ const main = async () => {
     throw new Error(`Invalid model: ${modelParameter}`)
   }
 
+  const spinner = ora("Generating command...").start()
   const command = await askAI(query, model, key)
-  console.log(`generated command:\n\n  ❯ ${command}\n`)
+  spinner.succeed(`generated command:\n\n  ❯ ${command}\n`)
 
   const shouldExecute = await prompts({
     name: "execute",
