@@ -57,6 +57,7 @@
   },
   "dependencies": {
     "conf": "^11.0.1",
+    "execa": "^7.1.1",
     "minimist": "^1.2.8",
     "openai": "^3.2.1",
     "prompts": "^2.4.2",

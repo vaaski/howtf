@@ -1,10 +1,11 @@
 #! /usr/bin/env node
 
-import { modelEnum, config } from "./config"
-import prompts from "prompts"
 import minimist from "minimist"
+import prompts from "prompts"
 import { z } from "zod"
+import { execaCommand } from "execa"
 import packageJson from "../package.json"
+import { config, modelEnum } from "./config"
 import { askAI } from "./gpt"
 
 const parameters = minimist(process.argv.slice(2), { string: ["key", "k", "model", "m"] })
@@ -104,17 +105,23 @@ const main = async () => {
   }
 
   const command = await askAI(query, model, key)
-  console.log(`generated command:\n\n  ${command}\n\n`)
+  console.log(`generated command:\n\n  ❯ ${command}\n`)
 
   const shouldExecute = await prompts({
     name: "execute",
     type: "confirm",
     message: "Execute it?",
     initial: true,
-
   })
 
   console.log(shouldExecute.execute ? "executing..." : "not executing")
+
+  if (shouldExecute.execute) {
+    process.stdout.moveCursor(0, -2)
+    process.stdout.clearScreenDown()
+
+    await execaCommand(command, { stdio: "inherit" })
+  }
 }
 
 main()
