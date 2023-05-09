@@ -7,12 +7,12 @@ if (OS_HUMAN === "win32") OS_HUMAN = "windows"
 const SYSTEM_MESSAGE = `You're a generator for console commands for a developer. Do not explain anything, just provide the command.`
 const PRETEXT = `I want to solve the following problem in the console on ${OS_HUMAN}:\n`
 
-const markdownRegex = /```(?:.+\n)?([\S\s]+)\n```/m
+const markdownRegex = /```(?:.+\n)?([\S\s]+)\n```|`(.+)`/m
 const extractMarkdownMaybe = (text: string) => {
   const match = text.match(markdownRegex)
   if (!match) return text
 
-  return match[1]
+  return match[1] || match[2]
 }
 
 export const askAI = async (query: string, model: string, apiKey: string) => {
