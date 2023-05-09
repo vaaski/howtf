@@ -39,7 +39,7 @@ const help = () => {
 
 const promptKey = async () => {
   const response = await prompts({
-    type: "text",
+    type: "password",
     name: "key",
     message: "Enter your OpenAI API key",
     validate: Boolean,
@@ -53,9 +53,6 @@ const main = async () => {
   let key = config.get("key")
   let model = config.get("model")
 
-  if (parameters.help || parameters.h || parameters._.length === 0) {
-    return help()
-  }
   if (parameters.version || parameters.v) {
     return console.log(packageJson.version)
   }
@@ -70,12 +67,25 @@ const main = async () => {
   if (suppliedKey && typeof suppliedKey === "string") {
     key = suppliedKey
   }
-  if (parameters["set-key"] || parameters.K) {
-    const keyResponse = await promptKey()
 
-    config.set("key", keyResponse.key)
-    key = keyResponse.key
+  const suppliedSetKey = parameters["set-key"] || parameters.K
+  if (suppliedSetKey) {
+    if (typeof suppliedSetKey === "string") {
+      config.set("key", suppliedSetKey)
+      key = suppliedSetKey
+    } else {
+      const keyResponse = await promptKey()
+      config.set("key", keyResponse.key)
+      key = keyResponse.key
+    }
+
+    return console.log("Key saved")
   }
+
+  if (parameters.help || parameters.h || parameters._.length === 0) {
+    return help()
+  }
+
   if (!key) {
     const keyResponse = await promptKey()
     key = keyResponse.key
