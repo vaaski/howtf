@@ -16,14 +16,12 @@ const extractMarkdownMaybe = (text: string) => {
 }
 
 export const askAI = async (query: string, model: string, apiKey: string) => {
-  // return "git status"
-
   const configuration = new Configuration({ apiKey })
   const openai = new OpenAIApi(configuration)
 
   const response = await openai.createChatCompletion({
     model,
-    temperature: 0.1,
+    temperature: 0,
     max_tokens: 128,
     messages: [
       { role: "system", content: SYSTEM_MESSAGE },
