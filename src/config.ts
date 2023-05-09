@@ -1,11 +1,13 @@
 import Conf from "conf"
+import { z } from "zod"
 
 export type HowtfRequest = {
   query: string
   response: string
 }
 
-export type Model = "gpt-3.5-turbo" | "gpt-4"
+export const modelEnum = z.enum(["gpt-3.5-turbo", "gpt-4", "3", "4"])
+export type Model = z.infer<typeof modelEnum>
 
 const defaults = {
   key: undefined as string | undefined,
