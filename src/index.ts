@@ -3,7 +3,9 @@
 import { modelEnum, config } from "./config"
 import prompts from "prompts"
 import minimist from "minimist"
+import { z } from "zod"
 import packageJson from "../package.json"
+import { askAI } from "./gpt"
 
 const parameters = minimist(process.argv.slice(2), { string: ["key", "k", "model", "m"] })
 const query = parameters._.join(" ")
@@ -88,7 +90,7 @@ const main = async () => {
 
   if (!key) {
     const keyResponse = await promptKey()
-    key = keyResponse.key
+    key = z.string().parse(keyResponse.key)
   }
 
   const modelParameter = parameters.model || parameters.m
@@ -101,7 +103,18 @@ const main = async () => {
     throw new Error(`Invalid model: ${modelParameter}`)
   }
 
-  console.log({ key, model, parameters, query })
+  const command = await askAI(query, model, key)
+  console.log(`generated command:\n\n  ${command}\n\n`)
+
+  const shouldExecute = await prompts({
+    name: "execute",
+    type: "confirm",
+    message: "Execute it?",
+    initial: true,
+
+  })
+
+  console.log(shouldExecute.execute ? "executing..." : "not executing")
 }
 
 main()
