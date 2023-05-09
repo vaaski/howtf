@@ -37,7 +37,8 @@
     "build": "unbuild",
     "stub": "unbuild --stub",
     "format": "prettier --write .",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "prepare": "npm run build"
   },
   "devDependencies": {
     "@types/minimist": "^1.2.2",
