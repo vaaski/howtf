@@ -52,3 +52,16 @@ howtf convert input.mp4 to gif with ffmpeg
 howtf undo last 3 commits
 # ❯ git reset HEAD~3 --hard
 ```
+
+### Options
+
+| Option          | Description                                                       |
+| --------------- | ----------------------------------------------------------------- |
+| --help, -h      | print help                                                        |
+| --version, -v   | print version                                                     |
+| --model, -m     | use model (gpt-3.5-turbo or gpt-4, you can also just pass 3 or 4) |
+| --set-model, -M | set model and save to config                                      |
+| --key, -k       | pass OpenAI API key once                                          |
+| --set-key, -K   | set OpenAI API key                                                |
+| --config, -c    | print config file location                                        |
+| --clear, -C     | clear config file                                                 |
