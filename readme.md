@@ -19,29 +19,28 @@ it automatically generated Video_stretched.mov as the output file.
 
 ### Installation
 
+Install using npm ([Node.js](https://nodejs.org/en/download) required):
+
 ```bash
 npm i -g howtf
 ```
 
-Save your OpenAI API key:
-
-```bash
-howtf -K [your API key]
-```
-
-Or just use it once instead of saving it it:
-
-```bash
-howtf -k [your API key] [command]
-```
+Unless youd ou'll be prompted to enter a OpenAI API key.
+You can generate one [here](https://platform.openai.com/account/api-keys).
 
 ### Usage
 
 ```bash
 howtf [command]
 ```
+Save your OpenAI API key so you don't have to enter it every time:
 
-For example:
+```bash
+howtf -K [your API key]
+# you can either pass it as an argument or enter it interactively
+```
+
+### Examples
 
 ```bash
 howtf convert input.mp4 to gif with ffmpeg
