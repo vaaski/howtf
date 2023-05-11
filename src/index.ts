@@ -1,45 +1,22 @@
 #! /usr/bin/env node
 
+import type { Flags } from "./config"
+
+import { execaCommand } from "execa"
 import minimist from "minimist"
+import ora from "ora"
 import prompts from "prompts"
 import { z } from "zod"
-import { execaCommand } from "execa"
+
 import packageJson from "../package.json"
-import { config, modelEnum } from "./config"
+import { config, humanModelEnum } from "./config"
 import { askAI } from "./gpt"
-import ora from "ora"
+import { modelShortcuts, printHelp } from "./util"
 
-const parameters = minimist(process.argv.slice(2), { string: ["key", "k", "model", "m"] })
+const parameters = minimist<Flags>(process.argv.slice(2), {
+  string: ["key", "k", "model", "m", "set-model", "M", "set-key", "K"],
+})
 const query = parameters._.join(" ")
-
-const help = () => {
-  const helpText = [
-    "howtf - use GPT to quickly look up a console command",
-    "",
-    "Usage:",
-    "  howtf [command]",
-    "",
-    "Options:",
-    "  --help, -h       print help",
-    "  --version, -v    print version",
-    "  --model, -m      use model (gpt-3.5-turbo or gpt-4, you can also just pass 3 or 4)",
-    "  --set-model, -M  set model and save to config",
-    "  --key, -k        pass OpenAI API key once",
-    "  --set-key, -K    set OpenAI API key",
-    "  --config, -c     print config file location",
-    "  --clear, -C      clear config file",
-    "",
-    "Examples:",
-    "  howtf undo last 2 git commits",
-    "  howtf remove all untracked files in git",
-    "  howtf print contents of all files ending in .js in current directory",
-    "",
-    "Config file location:",
-    `  ${config.path}`,
-  ].join("\n")
-
-  console.log(helpText)
-}
 
 const promptKey = async () => {
   const response = await prompts({
@@ -86,23 +63,28 @@ const main = async () => {
     return console.log("Key saved")
   }
 
+  const modelParameter =
+    parameters.model || parameters.m || parameters["set-model"] || parameters.M
+  const saveModel = Boolean(parameters["set-model"] || parameters.M)
+  const suppliedModel = humanModelEnum.safeParse(modelParameter)
+
+  if (suppliedModel.success) {
+    model = modelShortcuts(suppliedModel.data)
+    if (saveModel) {
+      config.set("model", model)
+      return console.log(`Default model saved as ${model}`)
+    }
+  } else if (modelParameter) {
+    throw new Error(`Invalid model: ${modelParameter}`)
+  }
+
   if (parameters.help || parameters.h || parameters._.length === 0) {
-    return help()
+    return printHelp()
   }
 
   if (!key) {
     const keyResponse = await promptKey()
     key = z.string().parse(keyResponse.key)
-  }
-
-  const modelParameter = parameters.model || parameters.m
-  const suppliedModel = modelEnum.safeParse(modelParameter)
-  if (suppliedModel.success) {
-    if (suppliedModel.data === "3") model = "gpt-3.5-turbo"
-    else if (suppliedModel.data === "4") model = "gpt-4"
-    else model = suppliedModel.data
-  } else if (modelParameter) {
-    throw new Error(`Invalid model: ${modelParameter}`)
   }
 
   const spinner = ora("Generating command...").start()
