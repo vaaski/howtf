@@ -1,26 +1,34 @@
 package main
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	"os"
+
+	tea "github.com/charmbracelet/bubbletea"
+)
+
+// love go enums
+const (
+	ConfigPage = iota
+	GenPage
+)
 
 type model struct {
-	choices  []string         // items on the to-do list
-	cursor   int              // which to-do list item our cursor is pointing at
-	selected map[int]struct{} // which to-do items are selected
+	args []string
+	page int
 }
 
 func initialModel() model {
 	return model{
-		// Our to-do list is a grocery list
-		choices: []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
-
-		// A map which indicates which choices are selected. We're using
-		// the  map like a mathematical set. The keys refer to the indexes
-		// of the `choices` slice, above.
-		selected: make(map[int]struct{}),
+		args: os.Args[1:],
+		page: GenPage,
 	}
 }
 
 func (m model) Init() tea.Cmd {
-	// Just return `nil`, which means "no I/O right now, please."
+
+	if m.page == GenPage {
+		return tea.Quit
+	}
+
 	return nil
 }
