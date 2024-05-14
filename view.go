@@ -1,19 +1,12 @@
 package main
 
-import (
-	"strings"
-)
-
 func (m model) View() string {
-	s := ""
+	var s string
 
 	if m.page == GenPage {
-		s += "Query:\n\n"
-		s += strings.Join(m.args, " ")
-		s += "\n"
+		s += queryView(&m)
 	} else if m.page == ConfigPage {
-		s += "Config:\n\n"
-		s += "Coming soon!"
+		s += configView(&m)
 	}
 
 	return s
