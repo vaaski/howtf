@@ -40,12 +40,12 @@ func configInitialModel() configModel {
 
 	config.tokenInput = textinput.New()
 	config.tokenInput.Placeholder = "Enter OpenAI API Token"
-	config.tokenInput.Prompt = ": "
+	config.tokenInput.Prompt = "OpenAI API Token: "
 	config.tokenInput.SetValue(config.openAIToken)
 
 	config.modelInput = textinput.New()
 	config.modelInput.Placeholder = "Enter OpenAI Text Model"
-	config.modelInput.Prompt = ": "
+	config.modelInput.Prompt = "OpenAI Text Model: "
 	config.modelInput.SetValue(config.openAITextModel)
 
 	return config
@@ -57,7 +57,11 @@ func configView(m *model) string {
 	s += "CONFIG"
 	s += "\n\n"
 
-	if m.config.quitting {
+	if !m.config.quitting {
+		s += m.config.tokenInput.View()
+		s += "\n"
+		s += m.config.modelInput.View()
+	} else {
 		s += "OpenAI API Token: "
 
 		if len(m.config.openAIToken) > 0 {
@@ -70,14 +74,6 @@ func configView(m *model) string {
 
 		s += "OpenAI Text Model: "
 		s += m.config.openAITextModel
-	} else {
-		s += "Token"
-		s += m.config.tokenInput.View()
-
-		s += "\n"
-
-		s += "Model"
-		s += m.config.modelInput.View()
 	}
 
 	s += "\n"
