@@ -15,14 +15,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 
-		case "ctrl+c", "esc":
-			return m, tea.Quit
+		// case "ctrl+c", "esc":
+		// 	return m, tea.Quit
 		}
 	}
 
 	switch m.page {
 	case ConfigPage:
 		return configController(&m, msg)
+	case QueryPage:
+		return queryController(&m, msg)
 	}
 
 	return m, tea.Batch(cmd)

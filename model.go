@@ -8,15 +8,16 @@ import (
 
 // self incrementing page constants
 const (
-	GenPage = iota
+	QueryPage = iota
 	ConfigPage
 )
 
 type setPage int
 
 const (
-	SERVICE_NAME = "howtf"
-	TOKEN_NAME   = "token"
+	SERVICE_NAME = "howtf-cli"
+	TOKEN_NAME   = "OpenAI-API-Token"
+	MODEL_NAME   = "OpenAI-Model"
 )
 
 type flags struct {
@@ -28,14 +29,16 @@ type model struct {
 	page int
 
 	config configModel
+	query  queryModel
 
 	flags flags
 }
 
 func initialModel() model {
 	m := model{
-		page:   GenPage,
+		page:   QueryPage,
 		config: configInitialModel(),
+		query:  queryInitialModel(),
 
 		flags: flags{
 			config: flag.Bool("config", false, "Open config page"),
@@ -51,12 +54,10 @@ func initialModel() model {
 func (m model) Init() tea.Cmd {
 	return func() tea.Msg {
 
-		// _, err := keyring.Get(SERVICE_NAME, TOKEN_NAME)
-
 		if *m.flags.config {
 			return setPage(ConfigPage)
 		}
 
-		return setPage(GenPage)
+		return setPage(QueryPage)
 	}
 }

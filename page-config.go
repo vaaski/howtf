@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/zalando/go-keyring"
 )
 
 const (
@@ -24,12 +25,23 @@ type configModel struct {
 func configInitialModel() configModel {
 	config := configModel{
 		openAITextModel: "gpt-4o",
+		openAIToken:     "",
+	}
+
+	token, err := keyring.Get(SERVICE_NAME, TOKEN_NAME)
+	if err == nil {
+		config.openAIToken = token
+	}
+
+	model, err := keyring.Get(SERVICE_NAME, MODEL_NAME)
+	if err == nil {
+		config.openAITextModel = model
 	}
 
 	config.tokenInput = textinput.New()
 	config.tokenInput.Placeholder = "Enter OpenAI API Token"
 	config.tokenInput.Prompt = ": "
-	config.modelInput.SetValue(config.openAIToken)
+	config.tokenInput.SetValue(config.openAIToken)
 
 	config.modelInput = textinput.New()
 	config.modelInput.Placeholder = "Enter OpenAI Text Model"
@@ -94,8 +106,21 @@ func configController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			m.config.quitting = true
 
+			if len(m.config.openAIToken) > 0 {
+				keyring.Set(SERVICE_NAME, TOKEN_NAME, m.config.openAIToken)
+			}
+
+			if len(m.config.openAITextModel) > 0 {
+				keyring.Set(SERVICE_NAME, MODEL_NAME, m.config.openAITextModel)
+			}
+
+			return m, tea.Quit
+
+		case tea.KeyEsc:
+			m.config.quitting = true
 			return m, tea.Quit
 		}
+
 	}
 
 	m.config.tokenInput.Blur()
