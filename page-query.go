@@ -2,16 +2,15 @@ package main
 
 import (
 	"log"
-	"math/rand"
 	"strings"
-	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type queryModel struct {
-	query string
+	query    string
+	response string
 
 	loading         bool
 	responseChannel chan queryResponse
@@ -52,7 +51,7 @@ func queryView(m *model) string {
 	}
 
 	s += "\n\n"
-	s += strings.Join(m.args, " ")
+	s += m.query.response
 
 	s += "\n"
 
@@ -97,7 +96,7 @@ func queryController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case queryResponse:
 		log.Println("queryResponse", msg)
-		m.args = append(m.args, string(msg))
+		m.query.response = string(msg)
 		return m, awaitResponse(m)
 
 	case responseFinished:
@@ -112,14 +111,7 @@ func queryController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func generateResponse(m *model) tea.Cmd {
 	return func() tea.Msg {
-
-		amount := rand.Intn(5) + 5
-		for i := 0; i < amount; i++ {
-			time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
-			m.query.responseChannel <- queryResponse("strtin")
-			log.Println("generateResponse")
-		}
-
+		generateGPT(m.config.openAIToken, m.query.query, m.query.responseChannel)
 		return responseFinished(true)
 	}
 }
