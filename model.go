@@ -51,13 +51,19 @@ func initialModel() model {
 	return m
 }
 
+type initCmd struct{}
+
 func (m model) Init() tea.Cmd {
-	return func() tea.Msg {
+	return tea.Batch(
+		func() tea.Msg {
+			if *m.flags.config {
+				return setPage(ConfigPage)
+			}
 
-		if *m.flags.config {
-			return setPage(ConfigPage)
-		}
-
-		return setPage(QueryPage)
-	}
+			return setPage(QueryPage)
+		},
+		func() tea.Msg {
+			return initCmd{}
+		},
+	)
 }
