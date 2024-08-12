@@ -6,6 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/muesli/reflow/wordwrap"
 )
 
 type queryModel struct {
@@ -51,7 +52,7 @@ func queryView(m *model) string {
 	}
 
 	s += "\n\n"
-	s += m.query.response
+	s += wordwrap.String(m.query.response, m.termWidth)
 
 	s += "\n"
 
@@ -95,15 +96,17 @@ func queryController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case queryResponse:
-		log.Println("queryResponse", msg)
-		m.query.response = string(msg)
-		return m, awaitResponse(m)
+		if m.query.loading {
+			log.Println("queryResponse", msg)
+			m.query.response = string(msg)
+			return m, awaitResponse(m)
+		}
 
 	case responseFinished:
 		log.Println("responseFinished", msg)
 		m.query.loading = false
 		close(m.query.responseChannel)
-		return m, tea.Quit
+		return m, nil
 	}
 
 	return m, cmd
@@ -118,7 +121,6 @@ func generateResponse(m *model) tea.Cmd {
 
 func awaitResponse(m *model) tea.Cmd {
 	return func() tea.Msg {
-		log.Println("awaitResponse")
 		return queryResponse(<-m.query.responseChannel)
 	}
 }

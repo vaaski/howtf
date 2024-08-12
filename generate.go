@@ -54,7 +54,7 @@ func generateGPT(token string, query string, responseChannel chan queryResponse)
 		}
 
 		responseAccumulator += response.Choices[0].Delta.Content
-		log.Println(responseAccumulator)
+		log.Println("responseAccumulator", responseAccumulator)
 		responseChannel <- queryResponse(extractMarkdownMaybe(responseAccumulator))
 	}
 }

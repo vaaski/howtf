@@ -31,6 +31,9 @@ type model struct {
 	config configModel
 	query  queryModel
 
+	termWidth  int
+	termHeight int
+
 	flags flags
 }
 
