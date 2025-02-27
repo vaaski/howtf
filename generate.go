@@ -12,12 +12,12 @@ import (
 
 var LLM_SYSTEM_MESSAGE = "You solve problems by generating console commands for a developer. Do not explain anything, just provide the command for " + getUserShell() + " on " + runtime.GOOS
 
-func generateGPT(token string, query string, responseChannel chan queryResponse) {
+func generateGPT(token string, model string, query string, responseChannel chan queryResponse) {
 	client := openai.NewClient(token)
 	ctx := context.Background()
 
 	request := openai.ChatCompletionRequest{
-		Model:       openai.GPT4o,
+		Model:       model,
 		Temperature: 0,
 		MaxTokens:   512,
 		Stream:      true,

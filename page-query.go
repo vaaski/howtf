@@ -239,7 +239,7 @@ func queryController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func generateResponse(m *model) tea.Cmd {
 	return func() tea.Msg {
-		generateGPT(m.config.openAIToken, m.query.finalQuery, m.query.responseChannel)
+		generateGPT(m.config.openAIToken, m.config.openAITextModel, m.query.finalQuery, m.query.responseChannel)
 		return responseFinished(true)
 	}
 }
