@@ -4,9 +4,13 @@ import (
 	"image/color"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 
+	"github.com/charmbracelet/glamour"
+	"github.com/charmbracelet/glamour/ansi"
+	"github.com/charmbracelet/glamour/styles"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/muesli/gamut"
@@ -24,7 +28,7 @@ func getUserShell() string {
 		if os.Getenv("COMSPEC") != "" {
 			path = os.Getenv("COMSPEC")
 		} else {
-			path = "/cmd.exe"
+			path = "cmd.exe"
 		}
 	case "darwin":
 		if os.Getenv("SHELL") != "" {
@@ -57,3 +61,31 @@ func gradientBackgroundText(base lipgloss.Style, s string, c1 color.Color, c2 co
 	}
 	return str
 }
+
+var MARKDOWN_REGEX = regexp.MustCompile(`(?s)\x60\x60\x60(?:\w*)?(?:\n)(.+)(?:\n)\x60\x60\x60|\x60(.+)\x60`)
+
+func extractMarkdownMaybe(s string) string {
+	matches := MARKDOWN_REGEX.FindStringSubmatch(s)
+
+	if len(matches) <= 1 {
+		return s
+	} else if len(matches[1]) > 0 {
+		return matches[1]
+	} else if len(matches[2]) > 0 {
+		return matches[2]
+	}
+
+	return s
+}
+
+func uintPtr(u uint) *uint { return &u }
+
+var markdownRenderer, _ = glamour.NewTermRenderer(
+	glamour.WithStyles(func() ansi.StyleConfig {
+		styles := styles.DarkStyleConfig
+		styles.Document.BlockPrefix = ""
+		styles.Document.BlockSuffix = ""
+		styles.CodeBlock.Margin = uintPtr(0)
+		return styles
+	}()),
+)

@@ -8,7 +8,6 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/reflow/wordwrap"
 )
 
 type queryModel struct {
@@ -66,7 +65,9 @@ func queryView(m *model) string {
 	borderStyle = borderStyle.Width(m.termWidth - borderWidth)
 	headerPositioning := lipgloss.NewStyle().Width(m.termWidth).Align(lipgloss.Center).Margin(1, 0)
 
-	s += headerPositioning.Render(gradientBackgroundText(headerStyle, headerString, lipgloss.Color("#ad0c88"), lipgloss.Color("#d65ab9")))
+	s += headerPositioning.Render(
+		gradientBackgroundText(headerStyle, headerString, lipgloss.Color("#ad0c88"), lipgloss.Color("#d65ab9")),
+	)
 
 	s += "\n"
 	if len(m.query.finalQuery) == 0 {
@@ -83,7 +84,13 @@ func queryView(m *model) string {
 
 	if len(m.query.response) > 0 {
 		s += "\n"
-		s += borderStyle.Render(wordwrap.String(m.query.response, m.termWidth))
+		out, err := markdownRenderer.Render(m.query.response)
+		if err != nil {
+			log.Println("error rendering markdown", err)
+			out = m.query.response
+		}
+
+		s += borderStyle.Padding(0).Render(out)
 	}
 
 	s += "\n"
@@ -123,7 +130,7 @@ func queryController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.query.loading = true
 				m.query.queryInput.Blur()
 				m.query.finalQuery = queryInput
-				return m, tea.Batch(generateResponse(m), awaitResponse(m), m.query.spinner.Tick)
+				return m, tea.Batch(generateResponse(m), awaitResponseChunk(m), m.query.spinner.Tick)
 			}
 		}
 		m.query.queryInput, cmd = m.query.queryInput.Update(msg)
@@ -139,7 +146,7 @@ func queryController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 					originalQuery = m.query.finalQuery
 				}
 
-				commandToExecute = m.query.response
+				responseMarkdown = m.query.response
 				return m, tea.Quit
 			case "n":
 				return m, tea.Quit
@@ -159,7 +166,7 @@ func queryController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.query.finalQuery = strings.Join(m.args, " ")
 			m.query.loading = true
-			return m, tea.Batch(generateResponse(m), awaitResponse(m), m.query.spinner.Tick)
+			return m, tea.Batch(generateResponse(m), awaitResponseChunk(m), m.query.spinner.Tick)
 		}
 
 	case responseFinished:
@@ -173,7 +180,7 @@ func queryController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.query.loading {
 			log.Println("queryResponse", msg)
 			m.query.response = string(msg)
-			return m, awaitResponse(m)
+			return m, awaitResponseChunk(m)
 		}
 	}
 
@@ -187,7 +194,7 @@ func generateResponse(m *model) tea.Cmd {
 	}
 }
 
-func awaitResponse(m *model) tea.Cmd {
+func awaitResponseChunk(m *model) tea.Cmd {
 	return func() tea.Msg {
 		return queryResponse(<-m.query.responseChannel)
 	}

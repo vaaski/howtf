@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io"
 	"log"
-	"regexp"
 	"runtime"
 
 	"github.com/sashabaranov/go-openai"
@@ -53,22 +52,6 @@ func generateGPT(token string, query string, responseChannel chan queryResponse)
 
 		responseAccumulator += response.Choices[0].Delta.Content
 		log.Println("responseAccumulator", responseAccumulator)
-		responseChannel <- queryResponse(extractMarkdownMaybe(responseAccumulator))
+		responseChannel <- queryResponse(responseAccumulator)
 	}
-}
-
-var MARKDOWN_REGEX = regexp.MustCompile(`(?s)\x60\x60\x60(?:\w*)?(?:\n)(.+)(?:\n)\x60\x60\x60|\x60(.+)\x60`)
-
-func extractMarkdownMaybe(s string) string {
-	matches := MARKDOWN_REGEX.FindStringSubmatch(s)
-
-	if len(matches) <= 1 {
-		return s
-	} else if len(matches[1]) > 0 {
-		return matches[1]
-	} else if len(matches[2]) > 0 {
-		return matches[2]
-	}
-
-	return s
 }

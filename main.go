@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -9,7 +10,7 @@ import (
 )
 
 var originalQuery string
-var commandToExecute string
+var responseMarkdown string
 
 func main() {
 	f, err := tea.LogToFile("debug.log", "debug")
@@ -30,9 +31,15 @@ func main() {
 		fmt.Println(chevronStyle.Render("> ") + originalQuery)
 	}
 
-	if len(commandToExecute) > 0 {
-		fmt.Println(borderStyle.UnsetWidth().Render(greyedOutStyle.Render(commandToExecute)))
+	if len(responseMarkdown) > 0 {
+		out, err := markdownRenderer.Render(responseMarkdown)
+		if err != nil {
+			log.Println("error rendering markdown", err)
+		}
 
+		fmt.Println(borderStyle.UnsetWidth().Padding(0).Render(greyedOutStyle.Render(out)))
+
+		commandToExecute := extractMarkdownMaybe(responseMarkdown)
 		executor.Execute(commandToExecute)
 	}
 }
