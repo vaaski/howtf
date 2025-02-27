@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/zalando/go-keyring"
 )
 
@@ -13,7 +14,6 @@ const (
 
 type configModel struct {
 	focusedInput int
-	quitting     bool
 
 	tokenInput textinput.Model
 	modelInput textinput.Model
@@ -40,12 +40,14 @@ func configInitialModel() configModel {
 
 	config.tokenInput = textinput.New()
 	config.tokenInput.Placeholder = "Enter OpenAI API Token"
-	config.tokenInput.Prompt = "OpenAI API Token: "
+	config.tokenInput.Prompt = "OpenAI API Token:  "
+	config.tokenInput.PromptStyle = greyedOutStyle
 	config.tokenInput.SetValue(config.openAIToken)
 
 	config.modelInput = textinput.New()
 	config.modelInput.Placeholder = "Enter OpenAI Text Model"
 	config.modelInput.Prompt = "OpenAI Text Model: "
+	config.modelInput.PromptStyle = greyedOutStyle
 	config.modelInput.SetValue(config.openAITextModel)
 
 	return config
@@ -54,27 +56,27 @@ func configInitialModel() configModel {
 func configView(m *model) string {
 	var s string
 
-	s += "CONFIG"
-	s += "\n\n"
+	headerPositioning := lipgloss.NewStyle().Width(m.termWidth).Align(lipgloss.Center).Margin(1, 0)
 
-	if !m.config.quitting {
-		s += m.config.tokenInput.View()
-		s += "\n"
-		s += m.config.modelInput.View()
-	} else {
-		s += "OpenAI API Token: "
+	configHeaderString := lipgloss.NewStyle().
+		Padding(0, 3).
+		SetString("howtf config").
+		String()
 
-		if len(m.config.openAIToken) > 0 {
-			s += hideString(m.config.openAIToken)
-		} else {
-			s += "NOT SET"
-		}
+	s += headerPositioning.Render(
+		gradientBackgroundText(headerStyle, configHeaderString, lipgloss.Color("#ad0c88"), lipgloss.Color("#d65ab9")),
+	)
+	s += "\n"
 
-		s += "\n"
+	s += "\n"
 
-		s += "OpenAI Text Model: "
-		s += m.config.openAITextModel
-	}
+	var inputs string
+
+	inputs += m.config.tokenInput.View()
+	inputs += "\n"
+	inputs += m.config.modelInput.View()
+
+	s += borderStyle.Render(inputs)
 
 	s += "\n"
 	return s
@@ -84,7 +86,6 @@ func configController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
-
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyTab:
@@ -100,8 +101,6 @@ func configController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.config.openAITextModel = m.config.modelInput.Value()
 			m.config.modelInput.Blur()
 
-			m.config.quitting = true
-
 			if len(m.config.openAIToken) > 0 {
 				keyring.Set(SERVICE_NAME, TOKEN_NAME, m.config.openAIToken)
 			}
@@ -113,7 +112,6 @@ func configController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case tea.KeyEsc:
-			m.config.quitting = true
 			return m, tea.Quit
 		}
 
