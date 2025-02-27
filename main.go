@@ -11,6 +11,7 @@ import (
 
 var originalQuery string
 var responseMarkdown string
+var shouldExecute = false
 
 func main() {
 	f, err := tea.LogToFile("debug.log", "debug")
@@ -39,7 +40,9 @@ func main() {
 
 		fmt.Println(borderStyle.UnsetWidth().Padding(0).Render(greyedOutStyle.Render(out)))
 
-		commandToExecute := extractMarkdownMaybe(responseMarkdown)
-		executor.Execute(commandToExecute)
+		if shouldExecute {
+			commandToExecute := extractMarkdownMaybe(responseMarkdown)
+			executor.Execute(commandToExecute)
+		}
 	}
 }
