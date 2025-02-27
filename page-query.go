@@ -22,7 +22,7 @@ type queryKeyMap struct {
 }
 
 func (k queryKeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Help, k.Quit}
+	return []key.Binding{k.Execute, k.Help}
 }
 
 func (k queryKeyMap) FullHelp() [][]key.Binding {

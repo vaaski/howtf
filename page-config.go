@@ -20,15 +20,16 @@ type configKeyMap struct {
 	Save     key.Binding
 	Next     key.Binding
 	Previous key.Binding
+	Delete   key.Binding
 }
 
 func (k configKeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Help, k.Quit}
+	return []key.Binding{k.Save, k.Help}
 }
 
 func (k configKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Next, k.Previous, k.Save},
+		{k.Save, k.Next, k.Previous, k.Delete},
 		{k.Help, k.Quit},
 	}
 }
@@ -53,6 +54,10 @@ var configKeys = configKeyMap{
 	Previous: key.NewBinding(
 		key.WithKeys("shift+tab", "up"),
 		key.WithHelp("↑/shift+tab", "previous input"),
+	),
+	Delete: key.NewBinding(
+		key.WithKeys("ctrl+d"),
+		key.WithHelp("ctrl+d", "delete data"),
 	),
 }
 
@@ -168,6 +173,11 @@ func configController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, configKeys.Help):
 			m.config.help.ShowAll = !m.config.help.ShowAll
 			return m, nil
+
+		case key.Matches(msg, configKeys.Delete):
+			keyring.Delete(SERVICE_NAME, TOKEN_NAME)
+			keyring.Delete(SERVICE_NAME, MODEL_NAME)
+			return m, tea.Quit
 		}
 
 	}
