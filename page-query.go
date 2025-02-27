@@ -107,12 +107,12 @@ func queryView(m *model) string {
 		s += borderStyle.Render(m.query.queryInput.View())
 	} else {
 		queryStyle := borderStyle.UnsetBorderStyle().Padding(0, 2)
-		prefix := chevronStyle.Render(">")
+		prefix := chevronStyle.Render("> ")
 		if m.query.loading {
 			prefix = m.query.spinner.View()
 		}
 
-		s += queryStyle.Render(prefix + " " + greyedOutStyle.Render(m.query.finalQuery))
+		s += queryStyle.Render(prefix + greyedOutStyle.Render(m.query.finalQuery))
 	}
 
 	if len(m.query.response) > 0 {
