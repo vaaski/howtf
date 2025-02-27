@@ -13,7 +13,7 @@ import (
 	"github.com/vaaski/howtf/clipboard"
 )
 
-type keyMap struct {
+type queryKeyMap struct {
 	Help    key.Binding
 	Quit    key.Binding
 	Execute key.Binding
@@ -21,18 +21,18 @@ type keyMap struct {
 	Edit    key.Binding
 }
 
-func (k keyMap) ShortHelp() []key.Binding {
+func (k queryKeyMap) ShortHelp() []key.Binding {
 	return []key.Binding{k.Help, k.Quit}
 }
 
-func (k keyMap) FullHelp() [][]key.Binding {
+func (k queryKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.Execute, k.Copy, k.Edit},
 		{k.Help, k.Quit},
 	}
 }
 
-var keys = keyMap{
+var queryKeys = queryKeyMap{
 	Help: key.NewBinding(
 		key.WithKeys("ctrl+h"),
 		key.WithHelp("ctrl+h", "toggle help"),
@@ -42,8 +42,8 @@ var keys = keyMap{
 		key.WithHelp("esc", "quit"),
 	),
 	Execute: key.NewBinding(
-		key.WithKeys("enter", "y"),
-		key.WithHelp("enter/y", "query"),
+		key.WithKeys("enter"),
+		key.WithHelp("enter", "query"),
 	),
 	Copy: key.NewBinding(
 		key.WithKeys("c"),
@@ -66,7 +66,7 @@ type queryModel struct {
 	queryInput textinput.Model
 	spinner    spinner.Model
 	help       help.Model
-	keys       keyMap
+	keys       queryKeyMap
 }
 
 type queryResponse string
@@ -75,11 +75,19 @@ type responseFinished bool
 func queryInitialModel() queryModel {
 	query := queryModel{
 		responseChannel: make(chan queryResponse),
+		keys:            queryKeys,
+		help:            help.New(),
 	}
 
 	query.queryInput = textinput.New()
 	query.queryInput.Placeholder = "Describe the problem you want to solve"
 	query.queryInput.Prompt = chevronStyle.Render("> ")
+
+	query.spinner.Spinner = spinner.Dot
+	query.spinner.Style = chevronStyle
+
+	query.keys.Copy.SetEnabled(false)
+	query.keys.Edit.SetEnabled(false)
 
 	return query
 }
@@ -134,9 +142,9 @@ func queryController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, keys.Quit):
+		case key.Matches(msg, queryKeys.Quit):
 			return m, tea.Quit
-		case key.Matches(msg, keys.Help):
+		case key.Matches(msg, queryKeys.Help):
 			m.query.help.ShowAll = !m.query.help.ShowAll
 			return m, nil
 		}
@@ -146,8 +154,8 @@ func queryController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 	if len(m.query.finalQuery) == 0 {
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
-			switch msg.Type {
-			case tea.KeyEnter:
+			switch {
+			case key.Matches(msg, queryKeys.Execute):
 				queryInput := m.query.queryInput.Value()
 
 				// ignore enter key on empty input
@@ -169,13 +177,13 @@ func queryController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
 			switch {
-			case key.Matches(msg, keys.Execute):
+			case key.Matches(msg, queryKeys.Execute):
 				shouldExecute = true
 				return m, tea.Quit
-			case key.Matches(msg, keys.Copy):
+			case key.Matches(msg, queryKeys.Copy):
 				clipboard.WriteToClipboard(extractMarkdownMaybe(m.query.response))
 				return m, tea.Quit
-			case key.Matches(msg, keys.Quit):
+			case key.Matches(msg, queryKeys.Quit):
 				return m, tea.Quit
 			}
 		}
@@ -183,17 +191,9 @@ func queryController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case initCmd:
-		// if query is given as arguments, skip the text input
-		m.query.spinner.Spinner = spinner.Dot
-		m.query.spinner.Style = chevronStyle
-
-		m.query.keys = keys
-		m.query.help = help.New()
 		m.query.help.Width = m.termWidth
 
-		m.query.keys.Copy.SetEnabled(false)
-		m.query.keys.Edit.SetEnabled(false)
-
+		// if query is given as arguments, skip the text input
 		if len(m.args) == 0 {
 			m.query.queryInput.Focus()
 			return m, textinput.Blink

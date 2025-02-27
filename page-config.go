@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -12,6 +14,48 @@ const (
 	modelInputFocus
 )
 
+type configKeyMap struct {
+	Help     key.Binding
+	Quit     key.Binding
+	Save     key.Binding
+	Next     key.Binding
+	Previous key.Binding
+}
+
+func (k configKeyMap) ShortHelp() []key.Binding {
+	return []key.Binding{k.Help, k.Quit}
+}
+
+func (k configKeyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		{k.Next, k.Previous, k.Save},
+		{k.Help, k.Quit},
+	}
+}
+
+var configKeys = configKeyMap{
+	Help: key.NewBinding(
+		key.WithKeys("ctrl+h"),
+		key.WithHelp("ctrl+h", "toggle help"),
+	),
+	Quit: key.NewBinding(
+		key.WithKeys("esc", "ctrl+c"),
+		key.WithHelp("esc", "cancel"),
+	),
+	Save: key.NewBinding(
+		key.WithKeys("enter"),
+		key.WithHelp("enter", "save"),
+	),
+	Next: key.NewBinding(
+		key.WithKeys("tab", "down"),
+		key.WithHelp("↓/tab", "next input"),
+	),
+	Previous: key.NewBinding(
+		key.WithKeys("shift+tab", "up"),
+		key.WithHelp("↑/shift+tab", "previous input"),
+	),
+}
+
 type configModel struct {
 	focusedInput int
 
@@ -20,12 +64,17 @@ type configModel struct {
 
 	openAIToken     string
 	openAITextModel string
+
+	keys configKeyMap
+	help help.Model
 }
 
 func configInitialModel() configModel {
 	config := configModel{
 		openAITextModel: "gpt-4o",
 		openAIToken:     "",
+		keys:            configKeys,
+		help:            help.New(),
 	}
 
 	token, err := keyring.Get(SERVICE_NAME, TOKEN_NAME)
@@ -40,13 +89,13 @@ func configInitialModel() configModel {
 
 	config.tokenInput = textinput.New()
 	config.tokenInput.Placeholder = "Enter OpenAI API Token"
-	config.tokenInput.Prompt = "OpenAI API Token:  "
+	config.tokenInput.Prompt = "OpenAI API Token   "
 	config.tokenInput.PromptStyle = greyedOutStyle
 	config.tokenInput.SetValue(config.openAIToken)
 
 	config.modelInput = textinput.New()
 	config.modelInput.Placeholder = "Enter OpenAI Text Model"
-	config.modelInput.Prompt = "OpenAI Text Model: "
+	config.modelInput.Prompt = "OpenAI Text Model  "
 	config.modelInput.PromptStyle = greyedOutStyle
 	config.modelInput.SetValue(config.openAITextModel)
 
@@ -78,7 +127,9 @@ func configView(m *model) string {
 
 	s += borderStyle.Render(inputs)
 
-	s += "\n"
+	s += "\n\n"
+	s += m.config.help.View(m.config.keys)
+
 	return s
 }
 
@@ -87,14 +138,14 @@ func configController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyTab:
+		switch {
+		case key.Matches(msg, configKeys.Next):
 			m.config.focusedInput = (m.config.focusedInput + 1) % 2
 
-		case tea.KeyShiftTab:
+		case key.Matches(msg, configKeys.Previous):
 			m.config.focusedInput = (m.config.focusedInput - 1 + 2) % 2
 
-		case tea.KeyEnter:
+		case key.Matches(msg, configKeys.Save):
 			m.config.openAIToken = m.config.tokenInput.Value()
 			m.config.tokenInput.Blur()
 
@@ -111,8 +162,12 @@ func configController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			return m, tea.Quit
 
-		case tea.KeyEsc:
+		case key.Matches(msg, configKeys.Quit):
 			return m, tea.Quit
+
+		case key.Matches(msg, configKeys.Help):
+			m.config.help.ShowAll = !m.config.help.ShowAll
+			return m, nil
 		}
 
 	}
