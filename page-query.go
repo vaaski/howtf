@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/vaaski/howtf/clipboard"
 )
 
 type keyMap struct {
@@ -193,6 +194,9 @@ func queryController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 			case key.Matches(msg, keys.Execute):
 				shouldExecute = true
 				return m, tea.Quit
+			case key.Matches(msg, keys.Copy):
+				clipboard.WriteToClipboard(extractMarkdownMaybe(m.query.response))
+				return m, tea.Quit
 			case key.Matches(msg, keys.Quit):
 				return m, tea.Quit
 			}
@@ -235,7 +239,10 @@ func queryController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 		responseMarkdown = m.query.response
 
 		m.query.keys.Execute.SetHelp(m.query.keys.Execute.Help().Key, "execute")
-		m.query.keys.Copy.SetEnabled(true)
+		if clipboard.ClipboardAvailable {
+			m.query.keys.Copy.SetEnabled(true)
+		}
+
 		// todo: edit mode
 		// m.query.keys.Edit.SetEnabled(true)
 
