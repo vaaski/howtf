@@ -1,10 +1,15 @@
 package main
 
 import (
+	"image/color"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/charmbracelet/lipgloss"
+	"github.com/lucasb-eyer/go-colorful"
+	"github.com/muesli/gamut"
 )
 
 func hideString(s string) string {
@@ -40,4 +45,15 @@ func getUserShell() string {
 	} else {
 		return filepath.Base(path)
 	}
+}
+
+func gradientBackgroundText(base lipgloss.Style, s string, c1 color.Color, c2 color.Color) string {
+	colors := gamut.Blends(c1, c2, len(s))
+
+	var str string
+	for i, ss := range s {
+		color, _ := colorful.MakeColor(colors[i%len(colors)])
+		str = str + base.Background(lipgloss.Color(color.Hex())).Render(string(ss))
+	}
+	return str
 }
