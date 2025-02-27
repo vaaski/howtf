@@ -1,3 +1,4 @@
+version: 2
 builds:
   - goos:
       - linux
@@ -16,7 +17,7 @@ builds:
           - CGO_ENABLED=1
 
 archives:
-  - format: binary
+  - formats: binary
     name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
 
 release:
