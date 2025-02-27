@@ -11,9 +11,7 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
-var LLM_SYSTEM_MESSAGE = "You're a generator for console commands for a developer. Do not explain anything, just provide the command for " + getUserShell() + " on " + runtime.GOOS
-
-const LLM_PRETEXT = "I want to solve the following problem:\n"
+var LLM_SYSTEM_MESSAGE = "You solve problems by generating console commands for a developer. Do not explain anything, just provide the command for " + getUserShell() + " on " + runtime.GOOS
 
 func generateGPT(token string, query string, responseChannel chan queryResponse) {
 	client := openai.NewClient(token)
@@ -31,7 +29,7 @@ func generateGPT(token string, query string, responseChannel chan queryResponse)
 			},
 			{
 				Role:    openai.ChatMessageRoleUser,
-				Content: LLM_PRETEXT + query,
+				Content: query,
 			},
 		},
 	}
