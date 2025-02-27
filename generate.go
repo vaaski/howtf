@@ -57,7 +57,7 @@ func generateGPT(token string, query string, responseChannel chan queryResponse)
 	}
 }
 
-var MARKDOWN_REGEX = regexp.MustCompile("```(?:.*\n)?(.+)\n?```|`(.+)`")
+var MARKDOWN_REGEX = regexp.MustCompile(`(?s)\x60\x60\x60(?:\w*)?(?:\n)(.+)(?:\n)\x60\x60\x60|\x60(.+)\x60`)
 
 func extractMarkdownMaybe(s string) string {
 	matches := MARKDOWN_REGEX.FindStringSubmatch(s)
