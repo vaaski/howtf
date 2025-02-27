@@ -4,6 +4,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -19,6 +20,7 @@ type queryModel struct {
 	responseChannel chan queryResponse
 
 	queryInput textinput.Model
+	spinner    spinner.Model
 }
 
 type queryResponse string
@@ -71,7 +73,12 @@ func queryView(m *model) string {
 		s += borderStyle.Render(m.query.queryInput.View())
 	} else {
 		queryStyle := borderStyle.UnsetBorderStyle().Padding(0, 2)
-		s += queryStyle.Render(chevronStyle.Render("> ") + greyedOutStyle.Render(m.query.finalQuery))
+		prefix := chevronStyle.Render(">")
+		if m.query.loading {
+			prefix = m.query.spinner.View()
+		}
+
+		s += queryStyle.Render(prefix + " " + greyedOutStyle.Render(m.query.finalQuery))
 	}
 
 	if len(m.query.response) > 0 {
@@ -86,6 +93,10 @@ func queryView(m *model) string {
 
 func queryController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
+
+	if m.query.loading {
+		m.query.spinner, cmd = m.query.spinner.Update(msg)
+	}
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -112,7 +123,7 @@ func queryController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.query.loading = true
 				m.query.queryInput.Blur()
 				m.query.finalQuery = queryInput
-				return m, tea.Batch(generateResponse(m), awaitResponse(m))
+				return m, tea.Batch(generateResponse(m), awaitResponse(m), m.query.spinner.Tick)
 			}
 		}
 		m.query.queryInput, cmd = m.query.queryInput.Update(msg)
@@ -139,13 +150,16 @@ func queryController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case initCmd:
 		// if query is given as arguments, skip the text input
+		m.query.spinner.Spinner = spinner.Dot
+		m.query.spinner.Style = chevronStyle
+
 		if len(m.args) == 0 {
 			m.query.queryInput.Focus()
 			return m, textinput.Blink
 		} else {
 			m.query.finalQuery = strings.Join(m.args, " ")
 			m.query.loading = true
-			return m, tea.Batch(generateResponse(m), awaitResponse(m))
+			return m, tea.Batch(generateResponse(m), awaitResponse(m), m.query.spinner.Tick)
 		}
 
 	case responseFinished:
