@@ -12,6 +12,7 @@ import (
 var originalQuery string
 var responseMarkdown string
 var shouldExecute = false
+var explainMode = false
 
 func main() {
 	f, err := tea.LogToFile("debug.log", "debug")
@@ -33,12 +34,16 @@ func main() {
 	}
 
 	if len(responseMarkdown) > 0 {
-		out, err := markdownRenderer.Render(responseMarkdown)
+		out, err := markdownCodeRenderer.Render(responseMarkdown)
 		if err != nil {
 			log.Println("error rendering markdown", err)
 		}
 
-		fmt.Println(borderStyle.UnsetWidth().Padding(0).Render(greyedOutStyle.Render(out)))
+		if explainMode {
+			fmt.Println(borderStyle.UnsetWidth().Padding(1, 2, 0, 0).Render(greyedOutStyle.Render(out)))
+		} else {
+			fmt.Println(borderStyle.UnsetWidth().Padding(0).Render(greyedOutStyle.Render(out)))
+		}
 
 		if shouldExecute {
 			commandToExecute := extractMarkdownMaybe(responseMarkdown)

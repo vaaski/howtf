@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
-	"strings"
 
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/glamour/ansi"
@@ -15,10 +14,6 @@ import (
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/muesli/gamut"
 )
-
-func hideString(s string) string {
-	return strings.Repeat("*", len(s))
-}
 
 func getUserShell() string {
 	var path string
@@ -80,7 +75,7 @@ func extractMarkdownMaybe(s string) string {
 
 func uintPtr(u uint) *uint { return &u }
 
-var markdownRenderer, _ = glamour.NewTermRenderer(
+var markdownCodeRenderer, _ = glamour.NewTermRenderer(
 	glamour.WithStyles(func() ansi.StyleConfig {
 		styles := styles.DarkStyleConfig
 		styles.Document.BlockPrefix = ""

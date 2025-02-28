@@ -21,7 +21,8 @@ const (
 )
 
 type flags struct {
-	config *bool
+	config  *bool
+	explain *bool
 }
 
 type model struct {
@@ -44,7 +45,8 @@ func initialModel() model {
 		query:  queryInitialModel(),
 
 		flags: flags{
-			config: flag.Bool("config", false, "Open config page"),
+			config:  flag.Bool("config", false, "open config page"),
+			explain: flag.Bool("explain", false, "directly enter explain mode"),
 		},
 	}
 

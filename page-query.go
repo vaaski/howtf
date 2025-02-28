@@ -19,6 +19,7 @@ type queryKeyMap struct {
 	Execute key.Binding
 	Copy    key.Binding
 	Edit    key.Binding
+	Explain key.Binding
 }
 
 func (k queryKeyMap) ShortHelp() []key.Binding {
@@ -27,7 +28,7 @@ func (k queryKeyMap) ShortHelp() []key.Binding {
 
 func (k queryKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Execute, k.Copy, k.Edit},
+		{k.Execute, k.Explain, k.Copy, k.Edit},
 		{k.Help, k.Quit},
 	}
 }
@@ -43,7 +44,7 @@ var queryKeys = queryKeyMap{
 	),
 	Execute: key.NewBinding(
 		key.WithKeys("enter"),
-		key.WithHelp("enter", "query"),
+		key.WithHelp("enter", "generate"),
 	),
 	Copy: key.NewBinding(
 		key.WithKeys("c"),
@@ -53,7 +54,16 @@ var queryKeys = queryKeyMap{
 		key.WithKeys("e"),
 		key.WithHelp("e", "edit"),
 	),
+	Explain: key.NewBinding(
+		key.WithKeys("ctrl+e"),
+		key.WithHelp("ctrl+e", "enable explain mode"),
+	),
 }
+
+const (
+	RESOLVE_PLACEHOLDER = "Describe the problem you want to solve"
+	EXPLAIN_PLACEHOLDER = "Enter the command you want to have explained"
+)
 
 type queryModel struct {
 	finalQuery string
@@ -62,6 +72,8 @@ type queryModel struct {
 	loading         bool
 	finished        bool
 	responseChannel chan queryResponse
+
+	explainMode bool
 
 	queryInput textinput.Model
 	spinner    spinner.Model
@@ -80,7 +92,7 @@ func queryInitialModel() queryModel {
 	}
 
 	query.queryInput = textinput.New()
-	query.queryInput.Placeholder = "Describe the problem you want to solve"
+	query.queryInput.Placeholder = RESOLVE_PLACEHOLDER
 	query.queryInput.Prompt = chevronStyle.Render("> ")
 
 	query.spinner.Spinner = spinner.Dot
@@ -117,13 +129,18 @@ func queryView(m *model) string {
 
 	if len(m.query.response) > 0 {
 		s += "\n"
-		out, err := markdownRenderer.Render(m.query.response)
+		out, err := markdownCodeRenderer.Render(m.query.response)
+
 		if err != nil {
 			log.Println("error rendering markdown", err)
 			out = m.query.response
 		}
 
-		s += borderStyle.Padding(0).Render(out)
+		if m.query.explainMode {
+			s += borderStyle.Padding(1, 2, 0, 0).Render(out)
+		} else {
+			s += borderStyle.Padding(0).Render(out)
+		}
 	}
 
 	s += "\n\n"
@@ -150,7 +167,7 @@ func queryController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	// the query is empty, handle text input events
+	// handle keys while inputting the query
 	if len(m.query.finalQuery) == 0 {
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
@@ -168,17 +185,33 @@ func queryController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.query.queryInput.Blur()
 				m.query.finalQuery = queryInput
 				return m, tea.Batch(generateResponse(m), awaitResponseChunk(m), m.query.spinner.Tick)
+
+			case key.Matches(msg, queryKeys.Explain):
+				// m.query.explainMode = !m.query.explainMode
+				// explainMode = m.query.explainMode
+
+				// if m.query.explainMode {
+				// 	m.query.keys.Explain.SetHelp(m.query.keys.Explain.Help().Key, "disable explain mode")
+				// 	m.query.queryInput.Placeholder = EXPLAIN_PLACEHOLDER
+				// } else {
+				// 	m.query.keys.Explain.SetHelp(m.query.keys.Explain.Help().Key, "enable explain mode")
+				// 	m.query.queryInput.Placeholder = RESOLVE_PLACEHOLDER
+				// }
+				return m, setExplainMode(m, !m.query.explainMode)
 			}
 		}
 		m.query.queryInput, cmd = m.query.queryInput.Update(msg)
 	}
 
+	// handle keys after the response arrived
 	if m.query.loading == false && m.query.finished == true {
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
 			switch {
 			case key.Matches(msg, queryKeys.Execute):
-				shouldExecute = true
+				if !m.query.explainMode {
+					shouldExecute = true
+				}
 				return m, tea.Quit
 			case key.Matches(msg, queryKeys.Copy):
 				clipboard.WriteToClipboard(extractMarkdownMaybe(m.query.response))
@@ -193,6 +226,10 @@ func queryController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 	case initCmd:
 		m.query.help.Width = m.termWidth
 
+		if *m.flags.explain == true {
+			setExplainMode(m, true)()
+		}
+
 		// if query is given as arguments, skip the text input
 		if len(m.args) == 0 {
 			m.query.queryInput.Focus()
@@ -205,9 +242,11 @@ func queryController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case responseFinished:
 		log.Println("responseFinished", msg)
+		close(m.query.responseChannel)
+
 		m.query.loading = false
 		m.query.finished = true
-		close(m.query.responseChannel)
+		m.query.keys.Explain.SetEnabled(false)
 
 		// only show the original query if it was entered interactively
 		if len(m.args) == 0 {
@@ -216,7 +255,11 @@ func queryController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		responseMarkdown = m.query.response
 
-		m.query.keys.Execute.SetHelp(m.query.keys.Execute.Help().Key, "execute")
+		if m.query.explainMode {
+			m.query.keys.Execute.SetHelp(m.query.keys.Execute.Help().Key, "exit")
+		} else {
+			m.query.keys.Execute.SetHelp(m.query.keys.Execute.Help().Key, "execute")
+		}
 		if clipboard.ClipboardAvailable {
 			m.query.keys.Copy.SetEnabled(true)
 		}
@@ -237,9 +280,30 @@ func queryController(m *model, msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
+func setExplainMode(m *model, mode bool) tea.Cmd {
+	return func() tea.Msg {
+		m.query.explainMode = mode
+		explainMode = m.query.explainMode
+
+		if m.query.explainMode {
+			m.query.keys.Explain.SetHelp(m.query.keys.Explain.Help().Key, "disable explain mode")
+			m.query.queryInput.Placeholder = EXPLAIN_PLACEHOLDER
+		} else {
+			m.query.keys.Explain.SetHelp(m.query.keys.Explain.Help().Key, "enable explain mode")
+			m.query.queryInput.Placeholder = RESOLVE_PLACEHOLDER
+		}
+
+		return nil
+	}
+}
+
 func generateResponse(m *model) tea.Cmd {
 	return func() tea.Msg {
-		generateGPT(m.config.openAIToken, m.config.openAITextModel, m.query.finalQuery, m.query.responseChannel)
+		if m.query.explainMode {
+			explainCommand(m.config.openAIToken, m.config.openAITextModel, m.query.finalQuery, m.query.responseChannel)
+		} else {
+			generateCommand(m.config.openAIToken, m.config.openAITextModel, m.query.finalQuery, m.query.responseChannel)
+		}
 		return responseFinished(true)
 	}
 }
