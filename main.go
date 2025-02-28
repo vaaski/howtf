@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 
@@ -14,13 +15,19 @@ var responseMarkdown string
 var shouldExecute = false
 var explainMode = false
 
+var shouldLog = "true"
+
 func main() {
-	f, err := tea.LogToFile("debug.log", "debug")
-	if err != nil {
-		fmt.Println("fatal:", err)
-		os.Exit(1)
+	if shouldLog == "true" {
+		f, err := tea.LogToFile("debug.log", "debug")
+		if err != nil {
+			fmt.Println("fatal:", err)
+			os.Exit(1)
+		}
+		defer f.Close()
+	} else {
+		log.SetOutput(io.Discard)
 	}
-	defer f.Close()
 
 	model := initialModel()
 	p := tea.NewProgram(model, tea.WithAltScreen())

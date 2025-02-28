@@ -8,6 +8,10 @@ builds:
       - amd64
       - arm64
     binary: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}} -X main.commit={{.Commit}}
+      - -X main.shouldLog=false
     env:
       - CGO_ENABLED=0
     overrides:
