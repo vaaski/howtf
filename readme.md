@@ -21,7 +21,7 @@ it automatically chose "example.mp4" as the output file.
 
 - 🔒 Securely stores your OpenAI API key in your OS keychain with [go-keyring](https://github.com/zalando/go-keyring)
 - 🙈 Lets you inspect the generated command before executing or copying it
-- 💪 Lets you describe your command as arguments or interactively to avoid having to escape special characters
+- 💪 Lets you describe your command as arguments or interactively to avoid escaping special characters
 - ⁉️ Can explain what any command does
 - 💅 Comes with a beautiful Terminal User Interface
 - 🆖 Cross-platform compatible
@@ -31,7 +31,7 @@ it automatically chose "example.mp4" as the output file.
 Install using `go install` (requires [Go](https://go.dev/doc/install)):
 
 ```bash
-go install github.com/vaaski/howtf@latest
+go install github.com/vaaski/howtf@go
 ```
 
 Run the interactive configuration wizard to set your OpenAI API key:
