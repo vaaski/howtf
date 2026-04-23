@@ -1,19 +1,19 @@
 {
-  "name": "howtf",
-  "module": "index.ts",
-  "type": "module",
-  "private": true,
-  "devDependencies": {
-    "@antfu/eslint-config": "^8.2.0",
-    "@types/bun": "latest",
-    "eslint": "^10.2.1",
-    "eslint-plugin-format": "^2.0.1",
-    "eslint-plugin-vaaski": "^3.1.1"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  },
-  "scripts": {
-    "lint": "eslint ."
-  }
+	"name": "howtf",
+	"type": "module",
+	"private": true,
+	"module": "index.ts",
+	"scripts": {
+		"lint": "eslint ."
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	},
+	"devDependencies": {
+		"@antfu/eslint-config": "^8.2.0",
+		"@types/bun": "latest",
+		"eslint": "^10.2.1",
+		"eslint-plugin-format": "^2.0.1",
+		"eslint-plugin-vaaski": "^3.1.1"
+	}
 }
