@@ -9,6 +9,20 @@
 	"peerDependencies": {
 		"typescript": "^5"
 	},
+	"dependencies": {
+		"@ai-sdk/anthropic": "^3.0.71",
+		"@ai-sdk/google": "^3.0.64",
+		"@ai-sdk/openai": "^3.0.53",
+		"@clack/core": "^1.2.0",
+		"@clack/prompts": "^1.2.0",
+		"@napi-rs/keyring": "^1.2.0",
+		"ai": "^6.0.168",
+		"clipboardy": "^5.3.1",
+		"conf": "^15.1.0",
+		"picocolors": "^1.1.1",
+		"tinyexec": "^1.1.1",
+		"zod": "^4.3.6"
+	},
 	"devDependencies": {
 		"@antfu/eslint-config": "^8.2.0",
 		"@types/bun": "latest",
