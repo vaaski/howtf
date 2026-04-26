@@ -36,4 +36,39 @@ export const prompts = {
 			],
 		})
 	},
+	edit: (problem: string, solution: string, edit: string) => {
+		return generateText({
+			model: openai("gpt-4.1"),
+			output: Output.object({
+				schema: z.object({
+					short_explanation: z.string(),
+					generated_command: z.object({
+						binary: z.string(),
+						args: z.array(z.string()),
+					}),
+				}),
+			}),
+			messages: [
+				{
+					role: "system",
+					content: [
+						"You generate oneliner-commands for a given problem.",
+						`The user is running ${process.env.SHELL} on ${platform()}`,
+					].join("\n"),
+				},
+				{
+					role: "user",
+					content: problem,
+				},
+				{
+					role: "assistant",
+					content: solution,
+				},
+				{
+					role: "user",
+					content: edit,
+				},
+			],
+		})
+	},
 }

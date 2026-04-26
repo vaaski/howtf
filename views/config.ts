@@ -1,6 +1,7 @@
 import { isCancel, log, note, password, selectKey } from "@clack/prompts"
 import pc from "picocolors"
 import { deleteApiKey, loadApiKey, saveApiKey } from "../src/config"
+import { exit } from "../src/util"
 
 export const configView = async () => {
 	const existingKey = loadApiKey("openai")
@@ -18,14 +19,14 @@ export const configView = async () => {
 	})
 
 	if (isCancel(action) || action === "x") {
-		process.exit(0)
+		exit(0)
 	}
 
 	if (action === "d") {
 		deleteApiKey("openai")
 		log.success("API key deleted")
 
-		process.exit(0)
+		exit(0)
 	}
 
 	const apiKey = await password({
@@ -33,10 +34,8 @@ export const configView = async () => {
 	})
 
 	if (isCancel(apiKey)) {
-		process.exit(0)
-	}
-
-	if (apiKey) {
+		exit(0)
+	} else {
 		saveApiKey("openai", apiKey)
 		log.success("API key saved")
 	}
