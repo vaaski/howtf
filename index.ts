@@ -15,14 +15,14 @@ switch (args.join("")) {
 	case "": {
 		const problem = await acquireProblem()
 		const solution = await generateSolution(problem)
-		await useSolution(problem, solution)
+		await useSolution(solution)
 		break
 	}
 
 	default: {
 		const problem = args.join(" ")
 		const solution = await generateSolution(problem)
-		await useSolution(problem, solution)
+		await useSolution(solution)
 
 		break
 	}

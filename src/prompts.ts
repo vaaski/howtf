@@ -1,3 +1,4 @@
+import type { ModelMessage } from "ai"
 import { platform } from "node:os"
 import { createOpenAI } from "@ai-sdk/openai"
 import { generateText, Output } from "ai"
@@ -9,8 +10,23 @@ const openai = createOpenAI({
 })
 
 export const prompts = {
-	generate: (problem: string) => {
-		return generateText({
+	generate: async (problem: string) => {
+		const messages: ModelMessage[] = [
+			{
+				role: "system",
+				content: [
+					"You generate oneliner-commands for a given problem.",
+					`The user is running ${process.env.SHELL} on ${platform()}`,
+				].join("\n"),
+			},
+			{
+				role: "user",
+				content: problem,
+			},
+		]
+
+		const result = await generateText({
+			messages,
 			model: openai("gpt-4.1"),
 			output: Output.object({
 				schema: z.object({
@@ -21,23 +37,26 @@ export const prompts = {
 					}),
 				}),
 			}),
-			messages: [
-				{
-					role: "system",
-					content: [
-						"You generate oneliner-commands for a given problem.",
-						`The user is running ${process.env.SHELL} on ${platform()}`,
-					].join("\n"),
-				},
-				{
-					role: "user",
-					content: problem,
-				},
-			],
 		})
+
+		return {
+			result,
+			history: [
+				...messages,
+				...result.response.messages,
+			],
+		}
 	},
-	edit: (problem: string, solution: string, edit: string) => {
-		return generateText({
+	edit: async (history: ModelMessage[], edit: string) => {
+		const messages: ModelMessage[] = [
+			...history,
+			{
+				role: "user",
+				content: edit,
+			},
+		]
+
+		const result = await generateText({
 			model: openai("gpt-4.1"),
 			output: Output.object({
 				schema: z.object({
@@ -48,27 +67,15 @@ export const prompts = {
 					}),
 				}),
 			}),
-			messages: [
-				{
-					role: "system",
-					content: [
-						"You generate oneliner-commands for a given problem.",
-						`The user is running ${process.env.SHELL} on ${platform()}`,
-					].join("\n"),
-				},
-				{
-					role: "user",
-					content: problem,
-				},
-				{
-					role: "assistant",
-					content: solution,
-				},
-				{
-					role: "user",
-					content: edit,
-				},
-			],
+			messages,
 		})
+
+		return {
+			result,
+			history: [
+				...messages,
+				...result.response.messages,
+			],
+		}
 	},
 }

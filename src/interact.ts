@@ -1,3 +1,4 @@
+import type { ModelMessage } from "ai"
 import { box, isCancel, log, selectKey, spinner, text } from "@clack/prompts"
 import clipboard from "clipboardy"
 import pc from "picocolors"
@@ -18,11 +19,13 @@ export const acquireProblem = async () => {
 	}
 }
 
+// --------------------------------------------------------------------------------------
+
 export const generateSolution = async (problem: string) => {
 	const spin = spinner()
 	spin.start("generating command")
 
-	const { output } = await prompts.generate(problem)
+	const { result: { output }, history } = await prompts.generate(problem)
 	const command = `${pc.bold(output.generated_command.binary)} ${output.generated_command.args.join(" ")}`
 	const commandRaw = `${output.generated_command.binary} ${output.generated_command.args.join(" ")}`
 
@@ -30,14 +33,14 @@ export const generateSolution = async (problem: string) => {
 
 	box(command)
 
-	return { command, commandRaw, output }
+	return { command, commandRaw, output, history }
 }
 
-export const editSolution = async (problem: string, solution: string, edit: string) => {
+export const editSolution = async (existingHistory: ModelMessage[], edit: string) => {
 	const spin = spinner()
 	spin.start("generating edits")
 
-	const { output } = await prompts.edit(problem, solution, edit)
+	const { result: { output }, history } = await prompts.edit(existingHistory, edit)
 	const command = `${pc.bold(output.generated_command.binary)} ${output.generated_command.args.join(" ")}`
 	const commandRaw = `${output.generated_command.binary} ${output.generated_command.args.join(" ")}`
 
@@ -45,14 +48,15 @@ export const editSolution = async (problem: string, solution: string, edit: stri
 
 	box(command)
 
-	return { command, commandRaw, output }
+	return { command, commandRaw, output, history }
 }
 
-export const useSolution = async (problem: string, {
-	command,
-	commandRaw,
-	output,
-}: Awaited<ReturnType<typeof generateSolution>>) => {
+// --------------------------------------------------------------------------------------
+
+type Solution = Awaited<ReturnType<typeof generateSolution>>
+export const useSolution = async (
+	{ command, commandRaw, output, history }: Solution,
+) => {
 	const action = await selectKey({
 		message: "What next?",
 		options: [
@@ -79,14 +83,14 @@ export const useSolution = async (problem: string, {
 
 		await child
 	} else if (action === "e") {
-		const edit = await text({
+		const editPrompt = await text({
 			message: "What needs changing?.",
 		})
 
-		if (isCancel(edit)) {
+		if (isCancel(editPrompt)) {
 			exit(0)
 		} else {
-			await useSolution(problem, await editSolution(problem, command, edit))
+			await useSolution(await editSolution(history, editPrompt))
 		}
 	} else if (action === "c") {
 		await clipboard.write(commandRaw)
