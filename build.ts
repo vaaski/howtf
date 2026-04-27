@@ -3,4 +3,5 @@ await Bun.build({
 	outdir: "./dist",
 	target: "node",
 	external: ["@napi-rs/keyring"],
+	banner: "#!/usr/bin/env node",
 })
